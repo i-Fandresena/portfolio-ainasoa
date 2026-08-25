@@ -4,6 +4,7 @@ import { ArrowUpRight, GraduationCap, Github, Mail, MapPin, MessageCircle } from
 import { portfolioData } from "@/data/portfolioData";
 import { strings } from "@/i18n/strings";
 import { useLanguage } from "@/lib/language-context";
+import { Magnetic } from "./Magnetic";
 
 const { developerInfo, techStack, services, projects, socials } = portfolioData;
 
@@ -23,6 +24,60 @@ function Blob({ className }: { className?: string }) {
       className={`pointer-events-none absolute rounded-full blur-3xl ${className ?? ""}`}
       style={{ backgroundImage: "var(--gradient-neon)", opacity: "var(--blob-opacity)" }}
     />
+  );
+}
+
+const WAVE_TILE_WIDTH = 300;
+const WAVE_TILE_HEIGHT = 48;
+const WAVE_TILES_PER_SET = 6;
+const WAVE_SET_WIDTH = WAVE_TILE_WIDTH * WAVE_TILES_PER_SET;
+const WAVE_PATH = `M0,24 C${WAVE_TILE_WIDTH * 0.125},4 ${WAVE_TILE_WIDTH * 0.375},44 ${WAVE_TILE_WIDTH * 0.5},24 C${WAVE_TILE_WIDTH * 0.625},4 ${WAVE_TILE_WIDTH * 0.875},44 ${WAVE_TILE_WIDTH},24`;
+
+/** A flowing, unfilled (hollow) wave line that loops seamlessly — a quiet signature flourish above the footer wordmark. */
+function HollowWave() {
+  return (
+    <div aria-hidden className="mb-6 h-10 w-full overflow-hidden opacity-90 sm:mb-8 sm:h-12">
+      <div className="animate-marquee flex w-max">
+        {[0, 1].map((setIndex) => (
+          <svg
+            key={setIndex}
+            width={WAVE_SET_WIDTH}
+            height={WAVE_TILE_HEIGHT}
+            viewBox={`0 0 ${WAVE_SET_WIDTH} ${WAVE_TILE_HEIGHT}`}
+            fill="none"
+            className="shrink-0"
+            style={{
+              filter: "drop-shadow(0 0 6px color-mix(in oklab, var(--primary) 50%, transparent))",
+            }}
+          >
+            <defs>
+              <linearGradient
+                id={`footer-wave-${setIndex}`}
+                gradientUnits="userSpaceOnUse"
+                x1="0"
+                y1="0"
+                x2={WAVE_SET_WIDTH}
+                y2="0"
+              >
+                <stop offset="0%" stopColor="var(--primary)" />
+                <stop offset="50%" stopColor="var(--secondary)" />
+                <stop offset="100%" stopColor="var(--primary)" />
+              </linearGradient>
+            </defs>
+            {Array.from({ length: WAVE_TILES_PER_SET }).map((_, i) => (
+              <path
+                key={i}
+                d={WAVE_PATH}
+                transform={`translate(${i * WAVE_TILE_WIDTH}, 0)`}
+                stroke={`url(#footer-wave-${setIndex})`}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            ))}
+          </svg>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -128,13 +183,15 @@ export function Hero() {
           transition={{ ...reveal.transition, delay: 0.25 }}
           className="mt-10"
         >
-          <a
-            href="#contact"
-            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-xs font-bold tracking-[0.2em] text-primary-foreground transition-shadow hover:neon-glow"
-            style={{ backgroundImage: "var(--gradient-neon)" }}
-          >
-            {t.hero.cta.toUpperCase()} <ArrowUpRight className="size-4" />
-          </a>
+          <Magnetic>
+            <a
+              href="#contact"
+              className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-xs font-bold tracking-[0.2em] text-primary-foreground transition-shadow hover:neon-glow"
+              style={{ backgroundImage: "var(--gradient-neon)" }}
+            >
+              {t.hero.cta.toUpperCase()} <ArrowUpRight className="size-4" />
+            </a>
+          </Magnetic>
         </motion.div>
       </div>
     </section>
@@ -247,6 +304,97 @@ export function Services() {
   );
 }
 
+function ProjectTile({
+  project: p,
+  delay,
+  featured = false,
+}: {
+  project: (typeof projects)[number];
+  delay: number;
+  featured?: boolean;
+}) {
+  const { locale } = useLanguage();
+  const t = strings[locale];
+  const primaryHref = p.liveUrl ?? p.codeUrl;
+  const reveal2 =
+    "opacity-0 translate-y-2 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 coarse:opacity-100 coarse:translate-y-0";
+
+  return (
+    <TiltCard
+      delay={delay}
+      className={`group relative isolate overflow-hidden rounded-3xl bg-card will-change-transform ${featured ? "sm:col-span-2" : ""}`}
+    >
+      <a
+        href={primaryHref}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={p.title[locale]}
+        className="absolute inset-0 z-0 rounded-3xl focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+      />
+
+      <div className={`pointer-events-none ${featured ? "aspect-[16/9]" : "aspect-[4/3]"}`}>
+        <img
+          src={p.image}
+          alt=""
+          loading="lazy"
+          className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+        />
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-95" />
+
+      <div className="absolute inset-x-4 top-4 z-10 flex items-center justify-between gap-2 sm:inset-x-5 sm:top-5">
+        <span className="pointer-events-none font-display text-xs font-bold tracking-[0.25em] text-white/70">
+          {p.id}
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="pointer-events-none hidden rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-white uppercase backdrop-blur-sm sm:inline-block">
+            {p.role[locale]}
+          </span>
+          {p.liveUrl && (
+            <a
+              href={p.codeUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t.projects.codeAria}
+              className="inline-flex size-9 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            >
+              <Github className="size-4" />
+            </a>
+          )}
+          <span className="pointer-events-none inline-flex size-9 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition-transform duration-300 group-hover:rotate-45">
+            <ArrowUpRight className="size-4" />
+          </span>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-4 bottom-4 sm:inset-x-5 sm:bottom-5">
+        <span className="mb-1.5 inline-block rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-white uppercase backdrop-blur-sm sm:hidden">
+          {p.role[locale]}
+        </span>
+        <h3
+          className={`font-display font-bold tracking-tight text-white uppercase ${featured ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl"}`}
+        >
+          {p.title[locale]}
+        </h3>
+        <p className={`mt-2 max-w-lg text-sm leading-relaxed text-white/75 ${reveal2}`}>
+          {p.description[locale]}
+        </p>
+        <ul className={`mt-3 flex flex-wrap gap-1.5 ${reveal2}`}>
+          {p.tags.map((tag) => (
+            <li
+              key={tag}
+              className="rounded-full border border-white/20 bg-white/5 px-2.5 py-1 text-[11px] text-white/80"
+            >
+              {tag}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </TiltCard>
+  );
+}
+
 export function Projects() {
   const { locale } = useLanguage();
   const t = strings[locale];
@@ -260,75 +408,9 @@ export function Projects() {
         >
           {t.projects.heading} <span className="text-stroke">{t.projects.headingAccent}</span>
         </motion.h2>
-        <div className="mt-14 flex flex-col gap-8">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2">
           {projects.map((p, i) => (
-            <TiltCard
-              key={p.id}
-              delay={i * 0.08}
-              className="group grid gap-8 rounded-2xl border border-border bg-card p-6 will-change-transform hover:neon-glow md:grid-cols-2 md:items-center"
-            >
-              <div className="aspect-video overflow-hidden rounded-2xl">
-                <img
-                  src={p.image}
-                  alt={`${p.title[locale]} preview`}
-                  loading="lazy"
-                  className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <span className="font-display text-sm font-bold tracking-[0.3em] text-primary">
-                    {p.id}
-                  </span>
-                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-muted-foreground uppercase">
-                    {p.role[locale]}
-                  </span>
-                </div>
-                <h3 className="font-display mt-3 text-2xl font-bold tracking-tight uppercase sm:text-3xl">
-                  {p.title[locale]}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  {p.description[locale]}
-                </p>
-                <ul className="mt-5 flex flex-wrap gap-2">
-                  {p.tags.map((tag) => (
-                    <li
-                      key={tag}
-                      className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground"
-                    >
-                      {tag}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-7 flex items-center gap-3">
-                  <a
-                    href={p.liveUrl ?? p.codeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-xs font-bold tracking-[0.2em] text-primary-foreground"
-                    style={{ backgroundImage: "var(--gradient-neon)" }}
-                  >
-                    {(p.liveUrl ? t.projects.ctaLive : t.projects.cta).toUpperCase()}
-                    {p.liveUrl ? (
-                      <ArrowUpRight className="size-4" />
-                    ) : (
-                      <Github className="size-4" />
-                    )}
-                  </a>
-                  {p.liveUrl && (
-                    <a
-                      href={p.codeUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={t.projects.codeAria}
-                      className="inline-flex size-11 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <Github className="size-4" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            </TiltCard>
+            <ProjectTile key={p.id} project={p} delay={i * 0.08} featured={i === 0} />
           ))}
         </div>
       </div>
@@ -422,6 +504,7 @@ export function Footer() {
     <footer className="relative overflow-hidden px-4 pt-24 pb-10">
       <Blob className="-bottom-32 left-1/3 size-96" />
       <div className="relative mx-auto max-w-6xl">
+        <HollowWave />
         <h2 className="font-display text-[13vw] leading-[0.85] font-extrabold tracking-tighter uppercase sm:text-[10vw]">
           HASIN&apos;NY
           <br />

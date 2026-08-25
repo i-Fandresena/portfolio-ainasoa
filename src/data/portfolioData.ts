@@ -109,6 +109,38 @@ export const portfolioData = {
     {
       id: "01",
       title: {
+        fr: "Aide à la Décision Multi-Critère (SAW)",
+        en: "Multi-Criteria Decision Tool (SAW)",
+      } satisfies Localized<string>,
+      description: {
+        fr: "Application Next.js implémentant la méthode SAW pour comparer des offres de serveurs selon plusieurs critères pondérés, avec visualisation du front de Pareto.",
+        en: "Next.js application implementing the SAW method to compare server offers across weighted criteria, with Pareto front visualization.",
+      } satisfies Localized<string>,
+      role: { fr: "Collaboratrice", en: "Collaborator" } satisfies Localized<string>,
+      tags: ["Next.js", "TypeScript", "Docker"],
+      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800",
+      codeUrl: "https://github.com/i-Fandresena/adomc-projet",
+      liveUrl: "https://adomc-projet.vercel.app",
+    },
+    {
+      id: "02",
+      title: {
+        fr: "Application de Productivité",
+        en: "Productivity App",
+      } satisfies Localized<string>,
+      description: {
+        fr: "Application de gestion de tâches en Next.js et TypeScript, avec authentification, base de données PostgreSQL (Neon) et tableaux de bord interactifs.",
+        en: "Task management app built with Next.js and TypeScript, featuring authentication, a PostgreSQL (Neon) database, and interactive dashboards.",
+      } satisfies Localized<string>,
+      role: { fr: "Contributrice", en: "Contributor" } satisfies Localized<string>,
+      tags: ["Next.js", "TypeScript", "PostgreSQL"],
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800",
+      codeUrl: "https://github.com/i-Fandresena/productivity-app-cz",
+      liveUrl: "https://productivity-app-cz.vercel.app",
+    },
+    {
+      id: "03",
+      title: {
         fr: "Gestion des Affectations",
         en: "Assignment Management System",
       } satisfies Localized<string>,
@@ -123,7 +155,7 @@ export const portfolioData = {
       liveUrl: null,
     },
     {
-      id: "02",
+      id: "04",
       title: {
         fr: "Projet DASPA",
         en: "DASPA Project",
@@ -139,23 +171,7 @@ export const portfolioData = {
       liveUrl: null,
     },
     {
-      id: "03",
-      title: {
-        fr: "Aide à la Décision Multi-Critère (SAW)",
-        en: "Multi-Criteria Decision Tool (SAW)",
-      } satisfies Localized<string>,
-      description: {
-        fr: "Application Next.js implémentant la méthode SAW pour comparer des offres de serveurs selon plusieurs critères pondérés, avec visualisation du front de Pareto.",
-        en: "Next.js application implementing the SAW method to compare server offers across weighted criteria, with Pareto front visualization.",
-      } satisfies Localized<string>,
-      role: { fr: "Collaboratrice", en: "Collaborator" } satisfies Localized<string>,
-      tags: ["Next.js", "TypeScript", "Docker"],
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800",
-      codeUrl: "https://github.com/i-Fandresena/adomc-projet",
-      liveUrl: "https://adomc-projet.vercel.app",
-    },
-    {
-      id: "04",
+      id: "05",
       title: {
         fr: "TP DevOps — Docker & Compose",
         en: "DevOps Lab — Docker & Compose",
@@ -169,22 +185,6 @@ export const portfolioData = {
       image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800",
       codeUrl: "https://github.com/i-Fandresena/Projet_M2_2026",
       liveUrl: null,
-    },
-    {
-      id: "05",
-      title: {
-        fr: "Application de Productivité",
-        en: "Productivity App",
-      } satisfies Localized<string>,
-      description: {
-        fr: "Application de gestion de tâches en Next.js et TypeScript, avec authentification, base de données PostgreSQL (Neon) et tableaux de bord interactifs.",
-        en: "Task management app built with Next.js and TypeScript, featuring authentication, a PostgreSQL (Neon) database, and interactive dashboards.",
-      } satisfies Localized<string>,
-      role: { fr: "Contributrice", en: "Contributor" } satisfies Localized<string>,
-      tags: ["Next.js", "TypeScript", "PostgreSQL"],
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800",
-      codeUrl: "https://github.com/i-Fandresena/productivity-app-cz",
-      liveUrl: "https://productivity-app-cz.vercel.app",
     },
   ],
   socials: {

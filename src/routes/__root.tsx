@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider, themeInitScript } from "../lib/theme-context";
 import { LanguageProvider } from "../lib/language-context";
+import { CursorGlow } from "../components/portfolio/CursorGlow";
 
 function NotFoundComponent() {
   return (
@@ -118,6 +119,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <div aria-hidden className="grain-overlay" />
+        <CursorGlow />
         {children}
         <Scripts />
       </body>

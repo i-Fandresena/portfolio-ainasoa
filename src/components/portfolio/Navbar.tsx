@@ -6,6 +6,7 @@ import { strings } from "@/i18n/strings";
 import { useTheme } from "@/lib/theme-context";
 import { useLanguage } from "@/lib/language-context";
 import { cn } from "@/lib/utils";
+import { Magnetic } from "./Magnetic";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -84,13 +85,15 @@ export function Navbar() {
             </span>
           </button>
           {!scrolled && (
-            <a
-              href="#contact"
-              className="inline-flex rounded-full px-5 py-2.5 text-xs font-bold tracking-[0.15em] text-primary-foreground transition-shadow hover:neon-glow"
-              style={{ backgroundImage: "var(--gradient-neon)" }}
-            >
-              {t.cta.toUpperCase()}
-            </a>
+            <Magnetic>
+              <a
+                href="#contact"
+                className="inline-flex rounded-full px-5 py-2.5 text-xs font-bold tracking-[0.15em] text-primary-foreground transition-shadow hover:neon-glow"
+                style={{ backgroundImage: "var(--gradient-neon)" }}
+              >
+                {t.cta.toUpperCase()}
+              </a>
+            </Magnetic>
           )}
         </div>
 
