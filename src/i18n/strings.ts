@@ -28,6 +28,8 @@ export const strings = {
       heading: "Projets",
       headingAccent: "sélectionnés",
       cta: "Voir le code",
+      ctaLive: "Voir le site",
+      codeAria: "Code source",
     },
     contact: {
       heading1: "Construisons",
@@ -68,6 +70,8 @@ export const strings = {
       heading: "Selected",
       headingAccent: "Work",
       cta: "View code",
+      ctaLive: "View live",
+      codeAria: "Source code",
     },
     contact: {
       heading1: "Let's Build",

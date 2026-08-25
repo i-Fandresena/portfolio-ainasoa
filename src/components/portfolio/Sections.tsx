@@ -276,12 +276,20 @@ export function Projects() {
                 />
               </div>
               <div className="min-w-0">
-                <span className="font-display text-sm font-bold tracking-[0.3em] text-primary">
-                  {p.id}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="font-display text-sm font-bold tracking-[0.3em] text-primary">
+                    {p.id}
+                  </span>
+                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-muted-foreground uppercase">
+                    {p.role[locale]}
+                  </span>
+                </div>
                 <h3 className="font-display mt-3 text-2xl font-bold tracking-tight uppercase sm:text-3xl">
                   {p.title[locale]}
                 </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {p.description[locale]}
+                </p>
                 <ul className="mt-5 flex flex-wrap gap-2">
                   {p.tags.map((tag) => (
                     <li
@@ -292,15 +300,33 @@ export function Projects() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href={p.codeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-xs font-bold tracking-[0.2em] text-primary-foreground"
-                  style={{ backgroundImage: "var(--gradient-neon)" }}
-                >
-                  {t.projects.cta.toUpperCase()} <Github className="size-4" />
-                </a>
+                <div className="mt-7 flex items-center gap-3">
+                  <a
+                    href={p.liveUrl ?? p.codeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-xs font-bold tracking-[0.2em] text-primary-foreground"
+                    style={{ backgroundImage: "var(--gradient-neon)" }}
+                  >
+                    {(p.liveUrl ? t.projects.ctaLive : t.projects.cta).toUpperCase()}
+                    {p.liveUrl ? (
+                      <ArrowUpRight className="size-4" />
+                    ) : (
+                      <Github className="size-4" />
+                    )}
+                  </a>
+                  {p.liveUrl && (
+                    <a
+                      href={p.codeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={t.projects.codeAria}
+                      className="inline-flex size-11 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Github className="size-4" />
+                    </a>
+                  )}
+                </div>
               </div>
             </TiltCard>
           ))}
