@@ -6,7 +6,6 @@ import {
   About,
   Services,
   Projects,
-  Testimonials,
   Contact,
   Footer,
 } from "@/components/portfolio/Sections";
@@ -42,7 +41,6 @@ function Index() {
         <About />
         <Services />
         <Projects />
-        <Testimonials />
         <Contact />
       </main>
       <Footer />

@@ -42,12 +42,12 @@ export function Navbar() {
           scrolled ? "py-2.5 shadow-lg shadow-black/10" : "py-3",
         )}
       >
-        <a
-          href="#top"
-          className="font-display shrink-0 text-lg font-extrabold tracking-tight uppercase"
-        >
-          {portfolioData.developerInfo.name}
-          <span className="text-primary">.</span>
+        <a href="#top" className="flex shrink-0 items-center">
+          <img
+            src="/logo_sans_fond.png"
+            alt={portfolioData.developerInfo.name}
+            className="h-10 w-auto object-contain sm:h-11"
+          />
         </a>
 
         <ul className="ml-auto hidden items-center gap-6 md:flex lg:gap-7">

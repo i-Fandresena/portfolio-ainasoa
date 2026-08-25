@@ -27,10 +27,7 @@ export const strings = {
     projects: {
       heading: "Projets",
       headingAccent: "sélectionnés",
-      cta: "Voir le projet",
-    },
-    testimonials: {
-      heading: "Ils en parlent",
+      cta: "Voir le code",
     },
     contact: {
       heading1: "Construisons",
@@ -70,10 +67,7 @@ export const strings = {
     projects: {
       heading: "Selected",
       headingAccent: "Work",
-      cta: "Live project",
-    },
-    testimonials: {
-      heading: "Kind Words",
+      cta: "View code",
     },
     contact: {
       heading1: "Let's Build",
