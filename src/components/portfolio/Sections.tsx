@@ -42,81 +42,6 @@ function Blob({ className }: { className?: string }) {
   );
 }
 
-const WAVE_TILE_WIDTH = 900;
-const WAVE_TILE_HEIGHT = 220;
-const WAVE_MID_Y = WAVE_TILE_HEIGHT / 2;
-const WAVE_STRAND_COUNT = 34;
-const WAVE_SPREAD = 78; // vertical spread of strands around the midline
-const WAVE_BASE_AMPLITUDE = 58;
-
-/** One strand's path: a smooth double-hump curve, nudged slightly in phase, amplitude and vertical offset per strand so the bundle reads as one organic, feathered ribbon rather than a stack of identical lines. */
-function waveStrandPath(index: number) {
-  const centered = index / (WAVE_STRAND_COUNT - 1) - 0.5; // -0.5..0.5
-  const midY = WAVE_MID_Y + centered * WAVE_SPREAD * 2;
-  const amplitude = WAVE_BASE_AMPLITUDE * (1 - Math.abs(centered) * 0.35);
-  const phase = centered * 22;
-  const w = WAVE_TILE_WIDTH;
-  return `M${phase},${midY} C${w * 0.18 + phase},${midY - amplitude} ${w * 0.32 + phase},${midY + amplitude} ${w * 0.5 + phase},${midY} C${w * 0.68 + phase},${midY - amplitude} ${w * 0.82 + phase},${midY + amplitude} ${w + phase},${midY}`;
-}
-
-/** Bell-curve falloff so strands thin out toward the top/bottom edges, giving the ribbon its soft, feathered border. */
-function waveStrandOpacity(index: number) {
-  const centered = index / (WAVE_STRAND_COUNT - 1) - 0.5;
-  const opacity = 0.5 * Math.max(0, 1 - Math.pow(Math.abs(centered) * 2, 1.6));
-  // Fixed precision so the server-rendered string and the client's re-computed
-  // number always serialize identically (avoids a spurious hydration mismatch).
-  return Number(opacity.toFixed(3));
-}
-
-/** A wide, feathered, multi-strand wave ribbon that drifts sideways in a seamless loop — a signature flourish above the footer wordmark. */
-function HollowWave() {
-  return (
-    <div aria-hidden className="h-16 w-full overflow-hidden sm:h-20">
-      <div className="animate-marquee flex h-full w-max items-center">
-        {[0, 1].map((setIndex) => (
-          <svg
-            key={setIndex}
-            width={WAVE_TILE_WIDTH}
-            height={WAVE_TILE_HEIGHT}
-            viewBox={`0 0 ${WAVE_TILE_WIDTH} ${WAVE_TILE_HEIGHT}`}
-            fill="none"
-            className="shrink-0"
-            style={{
-              filter: "drop-shadow(0 0 10px rgba(250, 204, 21, 0.45))",
-            }}
-          >
-            <defs>
-              <linearGradient
-                id={`footer-wave-${setIndex}`}
-                gradientUnits="userSpaceOnUse"
-                x1="0"
-                y1="0"
-                x2={WAVE_TILE_WIDTH}
-                y2="0"
-              >
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="30%" stopColor="#FDE047" />
-                <stop offset="60%" stopColor="#D97706" />
-                <stop offset="100%" stopColor="#FFFFFF" />
-              </linearGradient>
-            </defs>
-            {Array.from({ length: WAVE_STRAND_COUNT }).map((_, i) => (
-              <path
-                key={i}
-                d={waveStrandPath(i)}
-                stroke={`url(#footer-wave-${setIndex})`}
-                strokeWidth="1"
-                strokeLinecap="round"
-                opacity={waveStrandOpacity(i)}
-              />
-            ))}
-          </svg>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function usePointerTilt() {
   const ref = useRef<HTMLDivElement>(null);
   const rotateX = useMotionValue(0);
@@ -724,15 +649,9 @@ export function Footer() {
     <footer className="relative overflow-hidden px-4 pt-24 pb-10">
       <Blob className="-bottom-32 left-1/3 size-96" />
       <div className="relative mx-auto max-w-6xl">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <h2 className="font-display text-[13vw] leading-[0.85] font-extrabold tracking-tighter uppercase sm:text-[10vw]">
-            HASIN&apos;NY
-          </h2>
-          <div className="hidden w-40 shrink-0 sm:block sm:w-56 md:w-72">
-            <HollowWave />
-          </div>
-        </div>
         <h2 className="font-display text-[13vw] leading-[0.85] font-extrabold tracking-tighter uppercase sm:text-[10vw]">
+          HASIN&apos;NY
+          <br />
           AINASOA
         </h2>
         <div className="mt-12 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-t border-border pt-8">
