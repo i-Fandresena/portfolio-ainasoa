@@ -186,6 +186,22 @@ export const portfolioData = {
       codeUrl: "https://github.com/i-Fandresena/Projet_M2_2026",
       liveUrl: null,
     },
+    {
+      id: "06",
+      title: {
+        fr: "Ce Portfolio",
+        en: "This Portfolio",
+      } satisfies Localized<string>,
+      description: {
+        fr: "Le site que vous consultez en ce moment : TanStack Start et Tailwind CSS, bilingue FR/EN, thèmes clair/sombre, et un carrousel de projets réactif à la vitesse de scroll.",
+        en: "The very site you're browsing: TanStack Start and Tailwind CSS, bilingual FR/EN, light/dark themes, and a scroll-velocity-reactive project carousel.",
+      } satisfies Localized<string>,
+      role: { fr: "Projet personnel", en: "Personal project" } satisfies Localized<string>,
+      tags: ["TanStack Start", "TypeScript", "Tailwind CSS"],
+      image: "https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?q=80&w=800",
+      codeUrl: "https://github.com/i-Fandresena/portfolio-ainasoa",
+      liveUrl: null,
+    },
   ],
   socials: {
     github: "https://github.com/Antsohasina",
