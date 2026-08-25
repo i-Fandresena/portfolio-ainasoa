@@ -1,9 +1,24 @@
-import { motion, useMotionValue, useSpring } from "motion/react";
-import { useRef, type ReactNode, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  motion,
+  useAnimationFrame,
+  useMotionValue,
+  useScroll,
+  useSpring,
+  useTransform,
+  useVelocity,
+} from "motion/react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { ArrowUpRight, GraduationCap, Github, Mail, MapPin, MessageCircle } from "lucide-react";
 import { portfolioData } from "@/data/portfolioData";
 import { strings } from "@/i18n/strings";
 import { useLanguage } from "@/lib/language-context";
+import { useFinePointer, usePrefersReducedMotion } from "@/hooks/use-pointer-capabilities";
 import { Magnetic } from "./Magnetic";
 
 const { developerInfo, techStack, services, projects, socials } = portfolioData;
@@ -81,16 +96,7 @@ function HollowWave() {
   );
 }
 
-/** Card wrapper that tilts toward the cursor for a subtle 3D-canvas feel. */
-function TiltCard({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-}) {
+function usePointerTilt() {
   const ref = useRef<HTMLDivElement>(null);
   const rotateX = useMotionValue(0);
   const rotateY = useMotionValue(0);
@@ -111,11 +117,52 @@ function TiltCard({
     rotateY.set(0);
   }
 
+  return { ref, springX, springY, onPointerMove, onPointerLeave };
+}
+
+/** Card wrapper that tilts toward the cursor for a subtle 3D-canvas feel, revealed on scroll. */
+function TiltCard({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const { ref, springX, springY, onPointerMove, onPointerLeave } = usePointerTilt();
+
   return (
     <motion.div
       {...reveal}
       transition={{ ...reveal.transition, delay }}
       ref={ref}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      style={{ rotateX: springX, rotateY: springY, transformPerspective: 900 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Same cursor-tilt feel as TiltCard, without the scroll-triggered entrance — for content that's already in continuous motion (e.g. the projects carousel). */
+function TiltDiv({
+  children,
+  className,
+  inert,
+}: {
+  children: ReactNode;
+  className?: string;
+  inert?: boolean;
+}) {
+  const { ref, springX, springY, onPointerMove, onPointerLeave } = usePointerTilt();
+
+  return (
+    <motion.div
+      ref={ref}
+      inert={inert}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
       style={{ rotateX: springX, rotateY: springY, transformPerspective: 900 }}
@@ -306,12 +353,10 @@ export function Services() {
 
 function ProjectTile({
   project: p,
-  delay,
-  featured = false,
+  hidden = false,
 }: {
   project: (typeof projects)[number];
-  delay: number;
-  featured?: boolean;
+  hidden?: boolean;
 }) {
   const { locale } = useLanguage();
   const t = strings[locale];
@@ -320,9 +365,9 @@ function ProjectTile({
     "opacity-0 translate-y-2 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 coarse:opacity-100 coarse:translate-y-0";
 
   return (
-    <TiltCard
-      delay={delay}
-      className={`group relative isolate overflow-hidden rounded-3xl bg-card will-change-transform ${featured ? "sm:col-span-2" : ""}`}
+    <TiltDiv
+      inert={hidden}
+      className="group relative isolate w-[19rem] shrink-0 overflow-hidden rounded-3xl bg-card will-change-transform sm:w-[23rem]"
     >
       <a
         href={primaryHref}
@@ -332,7 +377,7 @@ function ProjectTile({
         className="absolute inset-0 z-0 rounded-3xl focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
       />
 
-      <div className={`pointer-events-none ${featured ? "aspect-[16/9]" : "aspect-[4/3]"}`}>
+      <div className="pointer-events-none aspect-[4/3]">
         <img
           src={p.image}
           alt=""
@@ -372,9 +417,7 @@ function ProjectTile({
         <span className="mb-1.5 inline-block rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-white uppercase backdrop-blur-sm sm:hidden">
           {p.role[locale]}
         </span>
-        <h3
-          className={`font-display font-bold tracking-tight text-white uppercase ${featured ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl"}`}
-        >
+        <h3 className="font-display text-lg font-bold tracking-tight text-white uppercase sm:text-xl">
           {p.title[locale]}
         </h3>
         <p className={`mt-2 max-w-lg text-sm leading-relaxed text-white/75 ${reveal2}`}>
@@ -391,28 +434,117 @@ function ProjectTile({
           ))}
         </ul>
       </div>
-    </TiltCard>
+    </TiltDiv>
   );
 }
 
-export function Projects() {
-  const { locale } = useLanguage();
-  const t = strings[locale];
+function wrapPx(min: number, max: number, v: number) {
+  const range = max - min;
+  return ((((v - min) % range) + range) % range) + min;
+}
+
+const CAROUSEL_BASE_SPEED = 44; // px/s at rest
+const CAROUSEL_VELOCITY_STRENGTH = 3.5;
+
+/**
+ * A continuously drifting project row whose speed and direction react to how
+ * fast (and which way) the page is being scrolled — inspired by the classic
+ * Framer Motion "scroll velocity" marquee technique, adapted here for
+ * clickable project cards rather than decorative text: it pauses on
+ * hover/focus so nothing has to be caught mid-flight, only the first,
+ * genuinely-focusable set of cards is reachable by keyboard/screen reader
+ * (the looping duplicate is marked `inert`), and it's skipped entirely for
+ * touch pointers or reduced-motion in favor of a plain native swipe row.
+ */
+function VelocityCarousel() {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [setWidth, setSetWidth] = useState(0);
+  const isPaused = useRef(false);
+  const direction = useRef(1);
+
+  const baseX = useMotionValue(0);
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
+  const velocityFactor = useTransform(smoothVelocity, [-2000, 0, 2000], [-1, 0, 1], {
+    clamp: true,
+  });
+  const x = useTransform(baseX, (v) => (setWidth ? wrapPx(-setWidth, 0, v) : 0));
+
+  useEffect(() => {
+    const measure = () => setSetWidth(trackRef.current?.scrollWidth ?? 0);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  useAnimationFrame((_, delta) => {
+    if (isPaused.current || !setWidth) return;
+    const factor = velocityFactor.get();
+    if (factor !== 0) direction.current = factor < 0 ? -1 : 1;
+    const speed =
+      CAROUSEL_BASE_SPEED + Math.abs(factor) * CAROUSEL_BASE_SPEED * CAROUSEL_VELOCITY_STRENGTH;
+    baseX.set(baseX.get() - direction.current * speed * (delta / 1000));
+  });
 
   return (
-    <section id="projects" className="px-4 py-28">
-      <div className="mx-auto max-w-6xl">
+    <div
+      className="w-full overflow-hidden"
+      onMouseEnter={() => (isPaused.current = true)}
+      onMouseLeave={() => (isPaused.current = false)}
+      onFocus={() => (isPaused.current = true)}
+      onBlur={() => (isPaused.current = false)}
+    >
+      <motion.div className="flex w-max px-4 sm:px-6" style={{ x }}>
+        <div ref={trackRef} className="flex gap-5 pr-5">
+          {projects.map((p) => (
+            <ProjectTile key={p.id} project={p} />
+          ))}
+        </div>
+        <div className="flex gap-5" aria-hidden>
+          {projects.map((p) => (
+            <ProjectTile key={`${p.id}-ghost`} project={p} hidden />
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/** Plain, native horizontal swiper — no JS-driven motion — for touch pointers and reduced-motion. */
+function StaticCarousel() {
+  return (
+    <div className="scrollbar-none flex w-full snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 sm:px-6">
+      {projects.map((p) => (
+        <div key={p.id} className="snap-start">
+          <ProjectTile project={p} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProjectsCarousel() {
+  const finePointer = useFinePointer();
+  const reducedMotion = usePrefersReducedMotion();
+  return finePointer && !reducedMotion ? <VelocityCarousel /> : <StaticCarousel />;
+}
+
+export function Projects() {
+  const t = strings[useLanguage().locale];
+
+  return (
+    <section id="projects" className="overflow-hidden py-28">
+      <div className="mx-auto max-w-6xl px-4">
         <motion.h2
           {...reveal}
           className="font-display text-4xl font-extrabold tracking-tight uppercase sm:text-6xl"
         >
           {t.projects.heading} <span className="text-stroke">{t.projects.headingAccent}</span>
         </motion.h2>
-        <div className="mt-14 grid gap-5 sm:grid-cols-2">
-          {projects.map((p, i) => (
-            <ProjectTile key={p.id} project={p} delay={i * 0.08} featured={i === 0} />
-          ))}
-        </div>
+      </div>
+      <div className="mt-14">
+        <ProjectsCarousel />
       </div>
     </section>
   );

@@ -196,6 +196,13 @@
   box-shadow: var(--shadow-neon);
 }
 
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Alternating "inverted" band: swaps the token set for its subtree so plain
    bg-background/text-foreground utilities pick up the flipped surface. */
 .section-flip {
