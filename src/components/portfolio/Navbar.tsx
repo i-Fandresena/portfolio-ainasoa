@@ -39,11 +39,11 @@ export function Navbar() {
       <nav
         style={{ maxWidth: scrolled ? "44rem" : "72rem" }}
         className={cn(
-          "glass flex w-full items-center gap-3 rounded-2xl px-4 transition-[max-width,padding,box-shadow] duration-500 ease-out sm:px-5",
+          "glass flex w-full items-center gap-3 rounded-2xl px-4 transition-[max-width,padding,box-shadow] duration-500 ease-out sm:px-5 md:grid md:grid-cols-[1fr_auto_1fr]",
           scrolled ? "py-2.5 shadow-lg shadow-black/10" : "py-3",
         )}
       >
-        <a href="#top" className="flex shrink-0 items-center">
+        <a href="#top" className="flex shrink-0 items-center md:justify-self-start">
           <img
             src="/logo_sans_fond.png"
             alt={portfolioData.developerInfo.name}
@@ -51,7 +51,7 @@ export function Navbar() {
           />
         </a>
 
-        <ul className="ml-auto hidden items-center gap-6 md:flex lg:gap-7">
+        <ul className="hidden items-center gap-6 md:flex md:justify-self-center lg:gap-7">
           {links.map((l) => (
             <li key={l.href}>
               <a
@@ -64,7 +64,7 @@ export function Navbar() {
           ))}
         </ul>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 md:flex md:justify-self-end">
           <button
             type="button"
             onClick={toggleLocale}

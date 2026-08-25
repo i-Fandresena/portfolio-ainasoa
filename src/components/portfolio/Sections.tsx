@@ -71,7 +71,7 @@ function waveStrandOpacity(index: number) {
 /** A wide, feathered, multi-strand wave ribbon that drifts sideways in a seamless loop — a signature flourish above the footer wordmark. */
 function HollowWave() {
   return (
-    <div aria-hidden className="mb-8 h-28 w-full overflow-hidden sm:mb-10 sm:h-36">
+    <div aria-hidden className="h-16 w-full overflow-hidden sm:h-20">
       <div className="animate-marquee flex h-full w-max items-center">
         {[0, 1].map((setIndex) => (
           <svg
@@ -82,7 +82,7 @@ function HollowWave() {
             fill="none"
             className="shrink-0"
             style={{
-              filter: "drop-shadow(0 0 10px color-mix(in oklab, var(--primary) 35%, transparent))",
+              filter: "drop-shadow(0 0 10px rgba(250, 204, 21, 0.45))",
             }}
           >
             <defs>
@@ -94,9 +94,10 @@ function HollowWave() {
                 x2={WAVE_TILE_WIDTH}
                 y2="0"
               >
-                <stop offset="0%" stopColor="var(--primary)" />
-                <stop offset="50%" stopColor="var(--secondary)" />
-                <stop offset="100%" stopColor="var(--primary)" />
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="30%" stopColor="#FDE047" />
+                <stop offset="60%" stopColor="#D97706" />
+                <stop offset="100%" stopColor="#FFFFFF" />
               </linearGradient>
             </defs>
             {Array.from({ length: WAVE_STRAND_COUNT }).map((_, i) => (
@@ -723,10 +724,15 @@ export function Footer() {
     <footer className="relative overflow-hidden px-4 pt-24 pb-10">
       <Blob className="-bottom-32 left-1/3 size-96" />
       <div className="relative mx-auto max-w-6xl">
-        <HollowWave />
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <h2 className="font-display text-[13vw] leading-[0.85] font-extrabold tracking-tighter uppercase sm:text-[10vw]">
+            HASIN&apos;NY
+          </h2>
+          <div className="hidden w-40 shrink-0 sm:block sm:w-56 md:w-72">
+            <HollowWave />
+          </div>
+        </div>
         <h2 className="font-display text-[13vw] leading-[0.85] font-extrabold tracking-tighter uppercase sm:text-[10vw]">
-          HASIN&apos;NY
-          <br />
           AINASOA
         </h2>
         <div className="mt-12 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-t border-border pt-8">
