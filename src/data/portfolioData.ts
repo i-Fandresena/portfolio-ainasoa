@@ -4,7 +4,7 @@ type Localized<T> = Record<Locale, T>;
 
 export const portfolioData = {
   developerInfo: {
-    name: "Hasina Ainasoa",
+    name: "Hasin'Ny Ainasoa",
     fullName: "ANDRIAMANJATOHASA Antson'Ny Famonjena Hasin'Ny Ainasoa Désirée",
     title: {
       fr: "DÉVELOPPEUSE FULL-STACK",

@@ -397,7 +397,7 @@ export function Footer() {
       <Blob className="-bottom-32 left-1/3 size-96" />
       <div className="relative mx-auto max-w-6xl">
         <h2 className="font-display text-[13vw] leading-[0.85] font-extrabold tracking-tighter uppercase sm:text-[10vw]">
-          HASINA
+          HASIN&apos;NY
           <br />
           AINASOA
         </h2>
