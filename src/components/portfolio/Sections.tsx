@@ -42,27 +42,47 @@ function Blob({ className }: { className?: string }) {
   );
 }
 
-const WAVE_TILE_WIDTH = 300;
-const WAVE_TILE_HEIGHT = 48;
-const WAVE_TILES_PER_SET = 6;
-const WAVE_SET_WIDTH = WAVE_TILE_WIDTH * WAVE_TILES_PER_SET;
-const WAVE_PATH = `M0,24 C${WAVE_TILE_WIDTH * 0.125},4 ${WAVE_TILE_WIDTH * 0.375},44 ${WAVE_TILE_WIDTH * 0.5},24 C${WAVE_TILE_WIDTH * 0.625},4 ${WAVE_TILE_WIDTH * 0.875},44 ${WAVE_TILE_WIDTH},24`;
+const WAVE_TILE_WIDTH = 900;
+const WAVE_TILE_HEIGHT = 220;
+const WAVE_MID_Y = WAVE_TILE_HEIGHT / 2;
+const WAVE_STRAND_COUNT = 34;
+const WAVE_SPREAD = 78; // vertical spread of strands around the midline
+const WAVE_BASE_AMPLITUDE = 58;
 
-/** A flowing, unfilled (hollow) wave line that loops seamlessly — a quiet signature flourish above the footer wordmark. */
+/** One strand's path: a smooth double-hump curve, nudged slightly in phase, amplitude and vertical offset per strand so the bundle reads as one organic, feathered ribbon rather than a stack of identical lines. */
+function waveStrandPath(index: number) {
+  const centered = index / (WAVE_STRAND_COUNT - 1) - 0.5; // -0.5..0.5
+  const midY = WAVE_MID_Y + centered * WAVE_SPREAD * 2;
+  const amplitude = WAVE_BASE_AMPLITUDE * (1 - Math.abs(centered) * 0.35);
+  const phase = centered * 22;
+  const w = WAVE_TILE_WIDTH;
+  return `M${phase},${midY} C${w * 0.18 + phase},${midY - amplitude} ${w * 0.32 + phase},${midY + amplitude} ${w * 0.5 + phase},${midY} C${w * 0.68 + phase},${midY - amplitude} ${w * 0.82 + phase},${midY + amplitude} ${w + phase},${midY}`;
+}
+
+/** Bell-curve falloff so strands thin out toward the top/bottom edges, giving the ribbon its soft, feathered border. */
+function waveStrandOpacity(index: number) {
+  const centered = index / (WAVE_STRAND_COUNT - 1) - 0.5;
+  const opacity = 0.5 * Math.max(0, 1 - Math.pow(Math.abs(centered) * 2, 1.6));
+  // Fixed precision so the server-rendered string and the client's re-computed
+  // number always serialize identically (avoids a spurious hydration mismatch).
+  return Number(opacity.toFixed(3));
+}
+
+/** A wide, feathered, multi-strand wave ribbon that drifts sideways in a seamless loop — a signature flourish above the footer wordmark. */
 function HollowWave() {
   return (
-    <div aria-hidden className="mb-6 h-10 w-full overflow-hidden opacity-90 sm:mb-8 sm:h-12">
-      <div className="animate-marquee flex w-max">
+    <div aria-hidden className="mb-8 h-28 w-full overflow-hidden sm:mb-10 sm:h-36">
+      <div className="animate-marquee flex h-full w-max items-center">
         {[0, 1].map((setIndex) => (
           <svg
             key={setIndex}
-            width={WAVE_SET_WIDTH}
+            width={WAVE_TILE_WIDTH}
             height={WAVE_TILE_HEIGHT}
-            viewBox={`0 0 ${WAVE_SET_WIDTH} ${WAVE_TILE_HEIGHT}`}
+            viewBox={`0 0 ${WAVE_TILE_WIDTH} ${WAVE_TILE_HEIGHT}`}
             fill="none"
             className="shrink-0"
             style={{
-              filter: "drop-shadow(0 0 6px color-mix(in oklab, var(--primary) 50%, transparent))",
+              filter: "drop-shadow(0 0 10px color-mix(in oklab, var(--primary) 35%, transparent))",
             }}
           >
             <defs>
@@ -71,7 +91,7 @@ function HollowWave() {
                 gradientUnits="userSpaceOnUse"
                 x1="0"
                 y1="0"
-                x2={WAVE_SET_WIDTH}
+                x2={WAVE_TILE_WIDTH}
                 y2="0"
               >
                 <stop offset="0%" stopColor="var(--primary)" />
@@ -79,14 +99,14 @@ function HollowWave() {
                 <stop offset="100%" stopColor="var(--primary)" />
               </linearGradient>
             </defs>
-            {Array.from({ length: WAVE_TILES_PER_SET }).map((_, i) => (
+            {Array.from({ length: WAVE_STRAND_COUNT }).map((_, i) => (
               <path
                 key={i}
-                d={WAVE_PATH}
-                transform={`translate(${i * WAVE_TILE_WIDTH}, 0)`}
+                d={waveStrandPath(i)}
                 stroke={`url(#footer-wave-${setIndex})`}
-                strokeWidth="2.5"
+                strokeWidth="1"
                 strokeLinecap="round"
+                opacity={waveStrandOpacity(i)}
               />
             ))}
           </svg>
@@ -382,6 +402,7 @@ function ProjectTile({
           src={p.image}
           alt=""
           loading="lazy"
+          draggable={false}
           className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
       </div>
@@ -456,11 +477,19 @@ const CAROUSEL_VELOCITY_STRENGTH = 3.5;
  * (the looping duplicate is marked `inert`), and it's skipped entirely for
  * touch pointers or reduced-motion in favor of a plain native swipe row.
  */
+const DRAG_CLICK_THRESHOLD = 6; // px of movement before a drag suppresses the click-through
+
 function VelocityCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [setWidth, setSetWidth] = useState(0);
   const isPaused = useRef(false);
   const direction = useRef(1);
+  const pointerDown = useRef(false);
+  const isDragging = useRef(false);
+  const lastPointerX = useRef(0);
+  const dragDistance = useRef(0);
+  const suppressClick = useRef(false);
+  const [isGrabbing, setIsGrabbing] = useState(false);
 
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
@@ -487,13 +516,71 @@ function VelocityCarousel() {
     baseX.set(baseX.get() - direction.current * speed * (delta / 1000));
   });
 
+  // Pointer capture is only acquired once real dragging is confirmed (past the
+  // click threshold) — capturing on every pointerdown would retarget the
+  // resulting click event to this container instead of the card's link,
+  // silently swallowing every plain click.
+  function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    if (e.pointerType === "touch") return; // touch pointers get the native StaticCarousel instead
+    suppressClick.current = false;
+    pointerDown.current = true;
+    isPaused.current = true;
+    lastPointerX.current = e.clientX;
+    dragDistance.current = 0;
+  }
+
+  function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!pointerDown.current) return;
+    const delta = e.clientX - lastPointerX.current;
+    lastPointerX.current = e.clientX;
+    dragDistance.current += Math.abs(delta);
+
+    if (!isDragging.current && dragDistance.current > DRAG_CLICK_THRESHOLD) {
+      isDragging.current = true;
+      suppressClick.current = true;
+      setIsGrabbing(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+
+    if (isDragging.current) {
+      if (delta !== 0) direction.current = delta > 0 ? -1 : 1;
+      baseX.set(baseX.get() + delta);
+    }
+  }
+
+  function endDrag(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!pointerDown.current) return;
+    pointerDown.current = false;
+    isPaused.current = false;
+    if (isDragging.current) {
+      isDragging.current = false;
+      setIsGrabbing(false);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    }
+  }
+
   return (
     <div
-      className="w-full overflow-hidden"
+      className={`w-full touch-pan-y overflow-hidden ${isGrabbing ? "cursor-grabbing" : "cursor-grab"}`}
       onMouseEnter={() => (isPaused.current = true)}
-      onMouseLeave={() => (isPaused.current = false)}
+      onMouseLeave={() => {
+        if (!isDragging.current) isPaused.current = false;
+      }}
       onFocus={() => (isPaused.current = true)}
       onBlur={() => (isPaused.current = false)}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onClickCapture={(e) => {
+        if (suppressClick.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          suppressClick.current = false;
+        }
+      }}
     >
       <motion.div className="flex w-max px-4 sm:px-6" style={{ x }}>
         <div ref={trackRef} className="flex gap-5 pr-5">
